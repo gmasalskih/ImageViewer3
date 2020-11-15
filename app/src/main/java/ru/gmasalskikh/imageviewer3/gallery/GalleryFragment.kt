@@ -5,27 +5,17 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
-import androidx.databinding.DataBindingUtil
-import androidx.fragment.app.Fragment
-import androidx.navigation.NavController
-import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupWithNavController
 import androidx.recyclerview.widget.GridLayoutManager
-import kotlinx.android.synthetic.main.activity_main.*
+import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.gmasalskikh.imageviewer3.BaseFragment
-import ru.gmasalskikh.imageviewer3.R
 import ru.gmasalskikh.imageviewer3.data.GalleryItem
 import ru.gmasalskikh.imageviewer3.databinding.FragmentGalleryBinding
 import java.io.File
@@ -38,6 +28,7 @@ class GalleryFragment : BaseFragment() {
     private lateinit var binding: FragmentGalleryBinding
     override lateinit var toolbar: Toolbar
     private lateinit var adapter: GalleryAdapter
+    private val viewModel: GalleryViewModel by viewModel()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,7 +37,9 @@ class GalleryFragment : BaseFragment() {
     ): View? {
         adapter = GalleryAdapter(
             clickListener = GalleryAdapter.GalleryItemClickListener { item ->
-
+                val action =
+                    GalleryFragmentDirections.actionGalleryToImageViewer(item.imgPath.toString())
+                navController.navigate(action)
             },
             longClickListener = GalleryAdapter.GalleryItemLongClickListener { item ->
                 createAlertDialog(item).show()
@@ -62,16 +55,12 @@ class GalleryFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        viewModel.listImgs.observe(viewLifecycleOwner) { list ->
+            adapter.submitList(list)
+        }
         binding.fab.setOnClickListener {
             val takePicture = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
             startActivityForResult(takePicture, 0)
-
-
-//            val pickPhoto = Intent(
-//                Intent.ACTION_PICK,
-//                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-//            )
-//            startActivityForResult(pickPhoto, 0)
         }
         super.onViewCreated(view, savedInstanceState)
     }
@@ -81,41 +70,40 @@ class GalleryFragment : BaseFragment() {
         .setTitle("Delete image")
         .setMessage("Are you sure?")
         .setPositiveButton("Yes") { _, _ ->
-            delFile(galleryItem.imgPath)
-            val newList = adapter.currentList.filter {
-                it.imgPath != galleryItem.imgPath
-            }
-            adapter.submitList(newList)
+            viewModel.delImg(galleryItem.imgPath)
+//            delFile(galleryItem.imgPath)
+//            val newList = adapter.currentList.filter {
+//                it.imgPath != galleryItem.imgPath
+//            }
+//            adapter.submitList(newList)
         }.setNegativeButton("No") { dialog, _ ->
             dialog.dismiss()
         }.create()
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == 0 && resultCode == RESULT_OK && data?.extras != null) {
-            val selectedImage = data.extras?.get("data") as Bitmap
-            val list = adapter.currentList
-            val urlImg = saveImg(selectedImage)
-            adapter.submitList(list + listOf(GalleryItem(imgPath = urlImg)))
+            Log.d("---", "onActivityResult")
+            (data.extras?.get("data") as Bitmap).let { bitmap -> viewModel.saveImg(bitmap) }
         }
     }
 
-    private fun delFile(uri: Uri) {
-        File("file://$uri").delete()
-    }
+//    private fun delFile(uri: Uri) {
+//        File("file://$uri").delete()
+//    }
 
-    private fun saveImg(bitmap: Bitmap): Uri {
-        val wrapper = ContextWrapper(requireContext())
-        var file = wrapper.getDir("images", Context.MODE_PRIVATE)
-        file = File(file, "${UUID.randomUUID()}.png")
-        try {
-            val stream: OutputStream = FileOutputStream(file)
-            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-            stream.flush()
-            stream.close()
-        } catch (e: IOException) {
-            Log.d("---", "${e.message}")
-        }
-        Log.d("---", Uri.parse(file.absolutePath).toString())
-        return Uri.parse(file.absolutePath)
-    }
+//    private fun saveImg(bitmap: Bitmap): Uri {
+//        val wrapper = ContextWrapper(requireContext())
+//        var file = wrapper.getDir("images", Context.MODE_PRIVATE)
+//        file = File(file, "${UUID.randomUUID()}.png")
+//        try {
+//            val stream: OutputStream = FileOutputStream(file)
+//            bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+//            stream.flush()
+//            stream.close()
+//        } catch (e: IOException) {
+//            Log.d("---", "${e.message}")
+//        }
+//        Log.d("---", Uri.parse(file.absolutePath).toString())
+//        return Uri.parse(file.absolutePath)
+//    }
 }

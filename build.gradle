@@ -4,6 +4,7 @@ buildscript {
         kotlin_version = "1.4.10"
         lifecycle_version = "2.2.0"
         navigation_version = "2.3.1"
+        koin_version = "2.2.0"
     }
     repositories {
         google()
