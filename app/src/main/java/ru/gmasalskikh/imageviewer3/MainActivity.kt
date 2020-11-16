@@ -1,5 +1,7 @@
 package ru.gmasalskikh.imageviewer3
 
+import android.content.res.ColorStateList
+import android.graphics.Color.rgb
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.databinding.DataBindingUtil
@@ -18,5 +20,10 @@ class MainActivity : AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
         navController = findNavController(R.id.navHostFragment)
         binding.navMenu.setupWithNavController(navController)
+        binding.navMenu.itemIconTintList = when(binding.navMenu.checkedItem?.itemId){
+            R.id.gallery -> ColorStateList.valueOf(rgb(255,0,0))
+            R.id.settings -> ColorStateList.valueOf(rgb(0,255,0))
+            else -> ColorStateList.valueOf(rgb(0,0,255))
+        }
     }
 }

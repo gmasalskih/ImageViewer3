@@ -4,7 +4,9 @@ import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.graphics.Bitmap
+import android.graphics.Color.rgb
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -14,8 +16,10 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.GridLayoutManager
+import com.google.android.material.navigation.NavigationView
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import ru.gmasalskikh.imageviewer3.BaseFragment
+import ru.gmasalskikh.imageviewer3.R
 import ru.gmasalskikh.imageviewer3.data.GalleryItem
 import ru.gmasalskikh.imageviewer3.databinding.FragmentGalleryBinding
 import java.io.File
@@ -58,6 +62,8 @@ class GalleryFragment : BaseFragment() {
         viewModel.listImgs.observe(viewLifecycleOwner) { list ->
             adapter.submitList(list)
         }
+        val nv = requireActivity().findViewById<NavigationView>(R.id.nav_menu)
+        if (nv.checkedItem?.itemId == R.id.gallery) nv.itemIconTintList = ColorStateList.valueOf(rgb(255,0,0))
         binding.fab.setOnClickListener {
             val takePicture = Intent(android.provider.MediaStore.ACTION_IMAGE_CAPTURE)
             startActivityForResult(takePicture, 0)
